@@ -7,15 +7,10 @@ defmodule GlobalId do
   Please implement the following function.
   64 bit non negative integer output
   """
-  @spec get_id(???) :: non_neg_integer
-  def get_id(???) do
-
+  @spec get_id() :: non_neg_integer
+  def get_id() do
+    1
   end
-
-  #
-  # You are given the following helper functions
-  # Presume they are implemented - there is no need to implement them.
-  #
 
   @doc """
   Returns your node id as an integer.
@@ -23,11 +18,11 @@ defmodule GlobalId do
   It is guaranteed to be globally unique.
   """
   @spec node_id() :: non_neg_integer
-  def node_id
+  def node_id, do: 18
 
   @doc """
   Returns timestamp since the epoch in milliseconds.
   """
   @spec timestamp() :: non_neg_integer
-  def timestamp
+  def timestamp, do: :os.system_time(:millisecond)
 end
