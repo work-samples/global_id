@@ -19,7 +19,7 @@ defmodule GlobalId do
 
   @doc """
   Returns your node id as an integer.
-  It will be greater than or equal to 0 and less than or equal to 1024.
+  It will be greater than or equal to 0 and less than 1024.
   It is guaranteed to be globally unique.
   """
   @spec node_id() :: non_neg_integer
