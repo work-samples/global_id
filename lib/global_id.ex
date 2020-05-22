@@ -1,4 +1,6 @@
 defmodule GlobalId do
+  use GenServer
+
   @moduledoc """
   GlobalId module contains an implementation of a guaranteed globally unique id system.
   """
@@ -14,11 +16,19 @@ defmodule GlobalId do
   monotonic, and we do not support two calls within the
   same microsecond, but this is a good start.
   """
-  @spec get_id() :: non_neg_integer
-  def get_id() do
-    <<n::size(64)>> = <<node_id()::10,timestamp()::54>>
+  @spec get_id(pid()) :: non_neg_integer
+  def get_id(pid) do
+    <<n::size(64)>> = <<node_id()::10, timestamp()::47, next_id(pid)::7>>
     n
   end
+
+  @doc """
+  Return a locally unique non-negative integer.
+  Provide the process of the GlobalId GenServer you
+  are connecting you.
+  """
+  @spec next_id(pid()) :: non_neg_integer
+  def next_id(pid), do: GenServer.call(pid, :next_id)
 
   @doc """
   Returns your node id as an integer.
@@ -33,4 +43,30 @@ defmodule GlobalId do
   """
   @spec timestamp() :: non_neg_integer
   def timestamp, do: :os.system_time(:microsecond)
+
+  #
+  # GenServer Functionality
+  #
+  #
+
+  @doc """
+  Start our GlobalId GenServer, with our next_id being 0.
+
+  You can start your server with `start_link/2` and then
+  send the message `:next_id` the PID as shown below.
+
+      iex> {:ok, pid} = GenServer.start_link(GlobalId, :ok)
+      iex> GenServer.call(pid, :next_id)
+
+  These behaviours are also captured in the API above.
+  """
+  @impl true
+  def init(_) do
+    {:ok, %{counter: 0}}
+  end
+
+  @impl true
+  def handle_call(:next_id, _from, %{counter: counter}) do
+    {:reply, counter, %{counter: counter + 1}}
+  end
 end
