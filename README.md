@@ -575,5 +575,65 @@ through at least 100 values so that our time-based approach could
 end
 ```
 
+### Is it fast enough?
 
+Next, we consider performance.  For that we used [benchee](https://hex.pm/packages/benchee)
+
+```
+@tag perf: true
+test "how long for 100k numbers" do
+  {:ok, pid1} = GenServer.start_link(GlobalId, 1)
+
+  Benchee.run(
+    %{
+      "get_id" => fn -> GlobalId.get_id(pid1) end
+    },
+    warmup: 0,
+    time: 10,
+    parallel: 4
+  )
+end
+```
+
+We will be calling our `get_id\1` function over and
+over for 10 seconds.
+
+To run the performance test we do
+
+```bash
+mix test test/perf_test.exs --include perf:true
+```
+
+This was tested on
+
+```
+Operating System: macOS
+CPU Information: Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz
+Number of Available Cores: 4
+Available memory: 16 GB
+Elixir 1.10.3
+Erlang 22.3
+```
+
+And produced the following output (we ran the test several times
+each row representing one 10s test).
+
+| Name | ips | average | deviation | median | 99th %
+| --- | --- | --- | --- | --- | --- |
+| get_id | 525.40 K | 1.90 μs | ±1584.91% | 2 μs | 3 μs
+| get_id | 401.50 K | 2.49 μs | ±1510.79% | 1.98 μs | 15.98 μs
+| get_id | 437.85 K | 2.28 μs | ±1473.27% | 2 μs | 13 μs
+| get_id | 437.70 K | 2.28 μs | ±1691.43% | 2 μs | 15 μs
+
+The definition of each field is below:
+
+* **name** - the of the test
+* **ips** - iterations per second, aka how often can the given function be executed within one second (the higher the better - good for graphing), only for run times
+* **average** - average execution time/memory usage (the lower the better)
+* **deviation** - standard deviation (how much do the results vary), given as a percentage of the average (raw absolute values also available)
+* **median** - when all measured values are sorted, this is the middle value. More stable than the average and somewhat more likely to be a typical value you see, for the most typical value see mode. (the lower the better)
+* **99th %** - 99th percentile, 99% of all measured values are less than this - worst case performance-ish
+
+The results seem to indicate our ID generator will work
+well at producing 100k IDs per second.
 

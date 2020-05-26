@@ -1,0 +1,9 @@
+%{
+  "benchee": {:hex, :benchee, "1.0.1", "66b211f9bfd84bd97e6d1beaddf8fc2312aaabe192f776e8931cb0c16f53a521", [:mix], [{:deep_merge, "~> 1.0", [hex: :deep_merge, repo: "hexpm", optional: false]}], "hexpm", "3ad58ae787e9c7c94dd7ceda3b587ec2c64604563e049b2a0e8baafae832addb"},
+  "benchee_html": {:hex, :benchee_html, "1.0.0", "5b4d24effebd060f466fb460ec06576e7b34a00fc26b234fe4f12c4f05c95947", [:mix], [{:benchee, ">= 0.99.0 and < 2.0.0", [hex: :benchee, repo: "hexpm", optional: false]}, {:benchee_json, "~> 1.0", [hex: :benchee_json, repo: "hexpm", optional: false]}], "hexpm", "5280af9aac432ff5ca4216d03e8a93f32209510e925b60e7f27c33796f69e699"},
+  "benchee_json": {:hex, :benchee_json, "1.0.0", "cc661f4454d5995c08fe10dd1f2f72f229c8f0fb1c96f6b327a8c8fc96a91fe5", [:mix], [{:benchee, ">= 0.99.0 and < 2.0.0", [hex: :benchee, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "da05d813f9123505f870344d68fb7c86a4f0f9074df7d7b7e2bb011a63ec231c"},
+  "deep_merge": {:hex, :deep_merge, "1.0.0", "b4aa1a0d1acac393bdf38b2291af38cb1d4a52806cf7a4906f718e1feb5ee961", [:mix], [], "hexpm", "ce708e5f094b9cd4e8f2be4f00d2f4250c4095be93f8cd6d018c753894885430"},
+  "jason": {:hex, :jason, "1.2.1", "12b22825e22f468c02eb3e4b9985f3d0cb8dc40b9bd704730efa11abd2708c44", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "b659b8571deedf60f79c5a608e15414085fa141344e2716fbd6988a084b5f993"},
+  "propcheck": {:hex, :propcheck, "1.2.0", "e2b84f2f1a4c46b6b2aa22a0f6ddf97696f99d4a5c8f71d45f6519741e727eca", [:mix], [{:proper, "~> 1.3", [hex: :proper, repo: "hexpm", optional: false]}], "hexpm", "0f4fb2393fa5321ba7f23a8feabc861ac825e62d9e1db4aa35e39cace4c5c08d"},
+  "proper": {:hex, :proper, "1.3.0", "c1acd51c51da17a2fe91d7a6fc6a0c25a6a9849d8dc77093533109d1218d8457", [:make, :mix, :rebar3], [], "hexpm", "4aa192fccddd03fdbe50fef620be9d4d2f92635b54f55fb83aec185994403cbc"},
+}
