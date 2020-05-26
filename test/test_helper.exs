@@ -1,2 +1,2 @@
-ExUnit.configure(exclude: [perf: true])
+ExUnit.configure(exclude: [perf: true, global: true])
 ExUnit.start()

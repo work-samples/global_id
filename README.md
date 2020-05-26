@@ -523,7 +523,7 @@ The testing of our ID generator can be split into
 
 * Is it correct?
 * Is it fast enough?
-* Is it guaranteed?
+* Is it guaranteed unique?
 
 ### Is is correct?
 
@@ -637,3 +637,42 @@ The definition of each field is below:
 The results seem to indicate our ID generator will work
 well at producing 100k IDs per second.
 
+### Is it guaranteed unique?
+
+We can our uniqueness guarantee by launching 1024 nodes
+and concurrently requesting IDs from them and ensuring
+the resulting list is unique.
+
+To run the test
+
+```
+mix test test/global_unique_test.exs  --include global:true
+```
+
+And here is the implementation (looking at 50k requests)
+
+```elixir
+@tag global: true
+test "globally unique" do
+
+  globals = 0..1023
+  |> Enum.map(fn node_id ->
+    {:ok, pid} = GenServer.start_link(GlobalId, node_id)
+    pid
+  end)
+
+  num_iterations = 50_000
+  unique_numbers = 1..num_iterations
+  |> Enum.map(fn _ ->
+    Task.async(fn ->
+      [pid] = Enum.take_random(globals, 1)
+      GenServer.call(pid, :get_id)
+    end)
+  end)
+  |> Enum.map(&Task.await/1)
+  |> Enum.uniq
+  |> Enum.count
+
+  assert unique_numbers == num_iterations
+end
+```
