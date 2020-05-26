@@ -2,7 +2,7 @@
 ## Problem
 
 Imagine you are building a system to assign unique numbers to each
-resource that you manage. You want the ids to be guaranteed unique
+resource that you manage. You want the IDs to be guaranteed unique
 i.e. no UUIDs.  Since these ids are globally unique, each id can
 only be given out at most once.
 
@@ -56,9 +56,9 @@ N2: 10 YYY
 N3: 11 YYY
 ```
 
-Now each node just manages uniquely providing a 3-bit number
-and it will be guaranteed to be globally unique based on
-the uniqueness of those first two bits.
+Now each node is responsible for managing its own uniqueness
+of a 3-bit number.  Global uniqueness will be assured by
+our NodeId prefix (the first two bits).
 
 
 ### Elixir Demonstration
@@ -67,8 +67,6 @@ This can be represented using
 [Bitstrings](https://elixir-lang.org/getting-started/binaries-strings-and-char-lists.html#bitstrings)
 in Elixir.
 
-Let's look at our 5-bit example in the iex shell.
-
 Here's the number 9 represented in bits
 
 ```
@@ -76,6 +74,8 @@ Here's the number 9 represented in bits
  ^  ^
  8  1
 ```
+
+Let's look at our 5-bit example in the iex shell.
 
 In Elixir, this can be (in a slightly verbose manner) done as follows
 
@@ -86,7 +86,7 @@ In Elixir, this can be (in a slightly verbose manner) done as follows
 For our example nodes, this can be split between 2 bits for
 the node and 3 bits for the number
 
-```elxir
+```elixir
 <<1::2,1::3>>
 ```
 
@@ -108,7 +108,7 @@ Each node can be represented with 10 bits (2^10 = 1024)
 we will use our unique node prefix, and then the
 remaining 54 bits to be unique within the node.
 
-The underlying call to timestamp is not guaranteed for
+The underlying call to timestamp is not guaranteed to be
 monotonic, and we do not support two calls within the
 same microsoft, but this is a good start.
 """
@@ -120,7 +120,7 @@ end
 ```
 
 The `node_id()` is assigned automatically from the node itself.
-The specification for the `next_id()` now only needs to be
+The specification for the `next_id()` only needs to be
 unique within the node itself.
 
 ```elixir
@@ -157,11 +157,12 @@ kT   T   B   M
 
 ### Timestamp solution
 
-The timestamp solution is simple but offers two possible
+A timestamp-based solution is simple but offers two possible
 problems.
 
-First, when will the numbers run out.  And second,
-will there ever be two requests at the exact same time
+First, when will the numbers run out?  And second,
+will there ever be two requests at the exact _same time_
+(based on the precision of our timestamp)
 causing our solution to (incorrectly) return duplicate IDs.
 
 #### How long will 2^54 last?
@@ -174,8 +175,8 @@ B   M
 ```
 
 Even if we supported units in microseconds, that
-is still only about 1.5 trillion, leaving each node
-with only 18,013 trillion possible  values instead of
+is still only about 1.5 trillion microseconds per year,
+leaving each node with 18,013 trillion numbers possible values instead of
 18,014 trillion.
 
 There are about 30 billion milliseconds each year
@@ -190,7 +191,7 @@ If our timestamp can only resolve to milliseconds,
 and we expect about 100k requests per second, that is
 around 100 requests every millisecond, which is not precise enough.
 
-If we had microtime resolution, **and** if we could guarantee
+If we had micro-time resolution, **and** if we could guarantee
 that our `get_id()` would perform not faster than a `1μ ms`
 then our solution below would be sufficient for our needs.
 
@@ -203,7 +204,7 @@ def next_id, do: :os.system_time(:microsecond)
 ```
 
 If we cannot guarantee those conditions then we need to
-look at `GlobalId` maintaining its own count.
+look at `GlobalId` maintaining its counter.
 
 ### How much to count?
 
@@ -289,7 +290,7 @@ uniformly 10/ms) then our system would last for about 500 years.
 You could argue if your system can count to a thousand, or
 to one-hundred thousand, why not have it do all the counting?
 
-Down-time and failures.
+The reason: down-time and failures.
 
 If a node goes offline, then when we bring it back up, or
 if a new node is brought back up in its stead, we do not
@@ -355,13 +356,13 @@ defmodule GlobalId do
   """
 
   @doc """
-  Return a globally unique 64 bit non-negative integer.
+  Return a globally unique 64-bit non-negative integer.
 
   Each node can be represented with 10 bits (2^10 = 1024)
-  we will use that our unique node prefix, and then the
+  we will use the unique node prefix, and then the
   remaining 54 bits to be unique within the node.
 
-  The underlying call to timestamp is not guaranteed for
+  The underlying call to timestamp is not guaranteed to be
   monotonic, and we do not support two calls within the
   same microsecond, but this is a good start.
   """
@@ -388,7 +389,7 @@ defmodule GlobalId do
   def node_id, do: 18
 
   @doc """
-  Returns timestamp since the epoch in microsecond.
+  Returns timestamp since the epoch in microseconds.
   """
   @spec timestamp() :: non_neg_integer
   def timestamp, do: :os.system_time(:microsecond)
@@ -460,7 +461,7 @@ defmodule GlobalId do
   we will use our unique node prefix, and then the
   remaining 54 bits to be unique within the node.
 
-  The underlying call to timestamp is not guaranteed for
+  The underlying call to timestamp is not guaranteed to be
   monotonic, and we do not support two calls within the
   same microsecond, but this is a good start.
   """
@@ -489,12 +490,10 @@ defmodule GlobalId do
   @doc """
   Start our GlobalId GenServer, with our next_id being 0.
 
-  You can start your server with
+  You can start your server with `start_link/2` and then
+  send the message `:get_id` the PID as shown below.
 
       iex> {:ok, pid} = GenServer.start_link(GlobalId, 18)
-
-  And then send messages to your server using
-
       iex> GenServer.call(pid, :get_id)
 
   These behaviours are also captured in the API above.
@@ -531,9 +530,8 @@ A fast service that returns incorrect results is somewhat useless.
 So our first tests focus on example-driven testing (aka unit testing)
 to see if the ID generator is doing what we expect.
 
-There are two tests at this level.  If our function monotonic
-(ever increasing), and does our time-based approach support the
-required _simultaneous_ access.
+There are two tests at this level.  Our function should be monotonic
+(ever-increasing), and supports sub-millisecond access.
 
 ```elixir
 test "should be monotonically increasing" do
@@ -577,11 +575,11 @@ end
 
 ### Is it fast enough?
 
-Next, we consider performance.  For that we used [benchee](https://hex.pm/packages/benchee)
+Next, we consider performance.  For that, we used [benchee](https://hex.pm/packages/benchee)
 
-```
+```elixir
 @tag perf: true
-test "how long for 100k numbers" do
+test "can we get 100k per second" do
   {:ok, pid1} = GenServer.start_link(GlobalId, 1)
 
   Benchee.run(
@@ -590,12 +588,12 @@ test "how long for 100k numbers" do
     },
     warmup: 0,
     time: 10,
-    parallel: 4
+    parallel: 1
   )
 end
 ```
 
-We will be calling our `get_id\1` function over and
+We will be calling our `&get_id/1` function over and
 over for 10 seconds.
 
 To run the performance test we do
@@ -632,20 +630,20 @@ The definition of each field is below:
 * **average** - average execution time/memory usage (the lower the better)
 * **deviation** - standard deviation (how much do the results vary), given as a percentage of the average (raw absolute values also available)
 * **median** - when all measured values are sorted, this is the middle value. More stable than the average and somewhat more likely to be a typical value you see, for the most typical value see mode. (the lower the better)
-* **99th %** - 99th percentile, 99% of all measured values are less than this - worst case performance-ish
+* **99th %** - 99th percentile, 99% of all measured values are less than this - worst-case performance-ish
 
 The results seem to indicate our ID generator will work
 well at producing 100k IDs per second.
 
 ### Is it guaranteed unique?
 
-We can our uniqueness guarantee by launching 1024 nodes
+We can test our uniqueness guarantee by launching 1024 nodes
 and concurrently requesting IDs from them and ensuring
 the resulting list is unique.
 
 To run the test
 
-```
+```bash
 mix test test/global_unique_test.exs  --include global:true
 ```
 
@@ -676,3 +674,25 @@ test "globally unique" do
   assert unique_numbers == num_iterations
 end
 ```
+
+## Summary
+
+Based on theoretical analysis of bitstrings, mixed with
+some engineering benchmarks, our solution seems to provide
+a GlobalId generator that offers unsynchronized unique IDs
+between upto 1024 nodes.
+
+The current solution will last for 4.5k years before we
+run out of numbers, and if that is of concern then the
+recommendation would be to go with a 128-bit integer
+split as follows.
+
+```
+XXXXXXXXXX YYYYY.........YYYYY  ZZZZZ.........ZZZZ
+  20 bits        71 bits              17 bits
+```
+
+Using 20 bits allows for a million nodes, and 17-bit
+counter allows for 100k every millisecond, which still
+leaves us with 71 bits for epoch time or a trillion-years
+(well past the 4.5B years that our sun will survive).

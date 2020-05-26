@@ -12,7 +12,7 @@ defmodule GlobalId do
   we will use that our unique node prefix, and then the
   remaining 54 bits to be unique within the node.
 
-  The underlying call to timestamp is not guaranteed for
+  The underlying call to timestamp is not guaranteed to be
   monotonic, and we do not support two calls within the
   same microsecond, but this is a good start.
   """
