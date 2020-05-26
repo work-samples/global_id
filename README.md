@@ -516,3 +516,64 @@ defmodule GlobalId do
   end
 end
 ```
+
+## Testing
+
+The testing of our ID generator can be split into
+
+* Is it correct?
+* Is it fast enough?
+* Is it guaranteed?
+
+### Is is correct?
+
+A fast service that returns incorrect results is somewhat useless.
+So our first tests focus on example-driven testing (aka unit testing)
+to see if the ID generator is doing what we expect.
+
+There are two tests at this level.  If our function monotonic
+(ever increasing), and does our time-based approach support the
+required _simultaneous_ access.
+
+```elixir
+test "should be monotonically increasing" do
+  {:ok, pid1} = GenServer.start_link(GlobalId, 1)
+  first = GlobalId.get_id(pid1)
+  second = GlobalId.get_id(pid1)
+  third = GlobalId.get_id(pid1)
+  assert first < second
+  assert second < third
+end
+```
+
+We also want to show that the last 7 bits of our solution do cycle
+through at least 100 values so that our time-based approach could
+(in theory) support the required 100,000 transactions a second
+(i.e. 100/ms).
+
+```elixir
+  test "theoretically support 100 (2^7) calls per millisecond" do
+    {:ok, pid1} = GenServer.start_link(GlobalId, 1)
+
+    allIds = Enum.map(0..129, fn _ -> GlobalId.get_id(pid1) end)
+
+    <<_::57, num_0::7>> = <<Enum.at(allIds, 0)::64>>
+    assert num_0 == 0
+
+    <<_::57, num_1::7>> = <<Enum.at(allIds, 1)::64>>
+    assert num_1 == 1
+
+    <<_::57, num_127::7>> = <<Enum.at(allIds, 127)::64>>
+    assert num_127 == 127
+
+    <<_::57, num_128::7>> = <<Enum.at(allIds, 128)::64>>
+    assert num_128 == 0
+
+    <<_::57, num_129::7>> = <<Enum.at(allIds, 129)::64>>
+    assert num_129 == 1
+  end
+end
+```
+
+
+
